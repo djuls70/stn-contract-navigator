@@ -48,12 +48,12 @@
       <table id="contractsTable" class="contracts-table">
         <thead>
           <tr>
-            <th style="width:18%;">Договор и Поставщик</th>
-            <th style="width:20%;">Документы пакета</th>
-            <th style="width:20%;">Сумма договора</th>
-            <th style="width:16%;">Срок поставки</th>
-            <th class="col-penalty" style="width:16%;">Неустойка (п. 4.1)</th>
-            <th style="width:26%;">Сведения для проверки</th>
+            <th class="col-c1">Договор и Поставщик</th>
+            <th class="col-c2">Документы пакета</th>
+            <th class="col-c3">Сумма договора</th>
+            <th class="col-c4">Срок поставки</th>
+            <th class="col-penalty">Неустойка (п. 4.1)</th>
+            <th class="col-c6">Сведения для проверки</th>
           </tr>
         </thead>
         <tbody id="contractsTableBody"></tbody>
@@ -453,12 +453,12 @@
 
         rowsHtml.push(
           '<tr class="' + rowClass + '">' +
-            '<td>' + colContract + '</td>' +
-            '<td>' + colDocs + '</td>' +
-            '<td>' + colAmount + '</td>' +
-            '<td>' + colDeliv + '</td>' +
+            '<td class="col-c1">' + colContract + '</td>' +
+            '<td class="col-c2">' + colDocs + '</td>' +
+            '<td class="col-c3">' + colAmount + '</td>' +
+            '<td class="col-c4">' + colDeliv + '</td>' +
             '<td class="col-penalty">' + colPenalty + '</td>' +
-            '<td>' + colVerify + '</td>' +
+            '<td class="col-c6">' + colVerify + '</td>' +
           '</tr>'
         );
       }

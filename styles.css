@@ -239,11 +239,11 @@ body.drag-over::after {
   cursor: pointer;
 }
 
-/* Зона 3: Основная рабочая область (60% таблица / 40% первоисточник) */
+/* Зона 3: Основная рабочая область (Таблица 1.65fr слева / Первоисточник 1fr справа) */
 .workspace-grid {
   display: grid;
-  grid-template-columns: 60% 40%;
-  gap: 0;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: 12px;
   padding: 12px 18px 18px 18px;
   flex: 1;
   align-items: start;
@@ -252,103 +252,124 @@ body.drag-over::after {
 @media (max-width: 1150px) {
   .top-bar { height: auto; padding: 10px 14px; flex-wrap: wrap; }
   .questions-grid { grid-template-columns: repeat(2, 1fr); }
-  .workspace-grid { grid-template-columns: 100%; gap: 14px; }
+  .workspace-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .viewer-panel { position: static !important; height: 560px !important; }
 }
 
 .table-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  margin-right: 12px;
-  overflow-x: auto;
-}
-
-@media (max-width: 1150px) {
-  .table-panel { margin-right: 0; }
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
 }
 
 .contracts-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  table-layout: auto;
 }
 
 .contracts-table th {
   background: #f1f5f9;
   color: #334155;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   text-align: left;
-  padding: 10px 12px;
+  padding: 8px 9px;
   border-bottom: 2px solid var(--border-color);
   border-right: 1px solid #e2e8f0;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  min-width: 0;
+  line-height: 1.25;
 }
 
 .contracts-table td {
-  padding: 12px;
+  padding: 8px 9px;
   vertical-align: top;
   border-bottom: 1px solid var(--border-color);
   border-right: 1px solid #e2e8f0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  min-width: 0;
 }
+
+/* Пропорции колонок в режиме 5 колонок (16% + 20% + 20% + 15% + 29% = 100%) */
+.contracts-table .col-c1 { width: 16%; }
+.contracts-table .col-c2 { width: 20%; }
+.contracts-table .col-c3 { width: 20%; }
+.contracts-table .col-c4 { width: 15%; }
+.contracts-table .col-penalty { display: none; width: 15%; }
+.contracts-table .col-c6 { width: 29%; }
+
+/* Пропорции колонок в режиме 6 колонок с Неустойкой (14% + 17% + 17% + 13% + 15% + 24% = 100%) */
+.contracts-table.show-penalty .col-c1 { width: 14%; }
+.contracts-table.show-penalty .col-c2 { width: 17%; }
+.contracts-table.show-penalty .col-c3 { width: 17%; }
+.contracts-table.show-penalty .col-c4 { width: 13%; }
+.contracts-table.show-penalty .col-penalty { display: table-cell; width: 15%; }
+.contracts-table.show-penalty .col-c6 { width: 24%; }
 
 .contracts-table tr.row-highlighted { background: #eff6ff; }
 .contracts-table tr.row-dimmed { opacity: 0.42; }
-.col-penalty { display: none; }
-.contracts-table.show-penalty .col-penalty { display: table-cell; }
 
 .contract-id {
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 800;
   color: var(--accent-primary);
-  white-space: nowrap;
 }
 
-.supplier-name { font-weight: 700; font-size: 13.5px; color: var(--text-main); margin-top: 2px; }
-.contract-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.35; }
+.supplier-name { font-weight: 700; font-size: 13px; color: var(--text-main); margin-top: 2px; line-height: 1.3; }
+.contract-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.3; }
 
 /* Плашки документов пакета */
-.doc-pill-list { display: flex; flex-direction: column; gap: 6px; }
+.doc-pill-list { display: flex; flex-direction: column; gap: 5px; }
 
 .doc-pill {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 5px 8px;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 5px 7px;
   background: var(--bg-muted);
   border: 1px solid var(--border-color);
   cursor: pointer;
   text-align: left;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .doc-pill:hover { border-color: var(--accent-primary); background: #eff6ff; }
-.doc-pill-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.doc-pill-title { font-weight: 700; font-size: 12px; color: var(--text-main); white-space: nowrap; }
+.doc-pill-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; flex-wrap: wrap; }
+.doc-pill-title { font-weight: 700; font-size: 11.5px; color: var(--text-main); white-space: normal; word-break: break-word; }
 
 .badge-sign {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 1px 5px;
+  padding: 1px 4px;
   white-space: nowrap;
 }
 
 .badge-signed { background: var(--status-ok-bg); color: var(--status-ok-text); border: 1px solid var(--status-ok-border); }
 .badge-unsigned { background: var(--status-warn-bg); color: var(--status-warn-text); border: 1px solid var(--status-warn-border); }
-.doc-pill-file { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+.doc-pill-file { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); margin-top: 2px; white-space: normal; word-break: break-all; }
 
 /* Ячейки суммы, срока и неустойки */
 .val-primary {
   font-family: var(--font-mono);
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 800;
   color: var(--text-main);
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   cursor: pointer;
-  display: inline-block;
+  display: inline;
   border-bottom: 1px dashed var(--accent-primary);
+  line-height: 1.35;
 }
 
 .val-primary:hover { color: var(--accent-primary); }
@@ -359,59 +380,68 @@ body.drag-over::after {
   color: var(--status-err-text);
   border: 1px solid var(--status-err-border);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
-  padding: 2px 8px;
-  white-space: nowrap;
+  padding: 2px 7px;
   cursor: pointer;
 }
 
 .change-note {
-  margin-top: 5px;
-  font-size: 11.5px;
+  margin-top: 4px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--status-ok-text);
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 
 .old-val-link {
   display: inline-block;
   margin-top: 2px;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-muted);
   text-decoration: line-through;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .old-val-link:hover { color: var(--accent-primary); }
 
 .source-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  padding: 3px 7px;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
+  margin-top: 5px;
+  padding: 3px 6px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
+  line-height: 1.3;
   color: #1e40af;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .source-btn:hover { background: #dbeafe; border-color: #60a5fa; }
-.penalty-rub { font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; white-space: nowrap; }
+.penalty-rub { font-size: 11px; color: var(--text-secondary); margin-top: 4px; white-space: normal; word-break: break-word; line-height: 1.3; }
 
 /* Колонка сведений для проверки и свернутых ловушек */
 .warn-card {
-  padding: 7px 9px;
+  display: block;
+  max-width: 100%;
+  padding: 6px 8px;
   margin-bottom: 6px;
   border-left: 3px solid var(--status-warn-border);
   background: var(--status-warn-bg);
   color: var(--status-warn-text);
-  font-size: 12px;
+  font-size: 11.5px;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .warn-card.high {
@@ -420,32 +450,41 @@ body.drag-over::after {
   color: var(--status-err-text);
 }
 
-.warn-title { font-weight: 700; line-height: 1.35; margin-bottom: 4px; }
+.warn-title { font-weight: 700; line-height: 1.3; margin-bottom: 3px; white-space: normal; word-break: break-word; }
 
 .traps-details {
-  margin-top: 6px;
+  display: block;
+  max-width: 100%;
+  margin-top: 5px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
-  font-size: 11.5px;
+  font-size: 11px;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .traps-details summary {
-  padding: 5px 8px;
+  display: block;
+  max-width: 100%;
+  padding: 5px 7px;
   cursor: pointer;
   font-weight: 600;
   color: var(--text-secondary);
   user-select: none;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 
 .traps-details summary:hover { color: var(--accent-primary); }
-.traps-list { padding: 6px 8px; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 5px; }
+.traps-list { padding: 6px 7px; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 6px; }
 
 .trap-item {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px;
+  display: block;
   color: var(--text-secondary);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 
 /* Правая панель первоисточника */
