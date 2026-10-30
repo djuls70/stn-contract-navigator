@@ -7,538 +7,630 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- ВЕРХНЯЯ ШАПКА -->
-  <header class="topbar">
-    <div class="brand-block">
+
+  <!-- Зона 1: Компактная одноуровневая верхняя панель (Header + Controls) -->
+  <header class="top-bar">
+    <div class="top-bar-left">
       <div class="brand-title">Semantic TextNavigator</div>
-      <div class="brand-subtitle">CONTRACT AUDIT PROTOTYPE v3.0 // ВЕРИФИКАЦИЯ ОБЯЗАТЕЛЬСТВ И ПЕРВОИСТОЧНИКОВ</div>
+      <input type="file" id="fileInputReplace" multiple accept=".txt,text/plain" style="display:none" onchange="handleFilesUpload(event, true)">
+      <input type="file" id="fileInputAppend" multiple accept=".txt,text/plain" style="display:none" onchange="handleFilesUpload(event, false)">
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInputReplace').click()">Загрузить .txt файлы</button>
+      <button type="button" class="btn" onclick="document.getElementById('fileInputAppend').click()">+ Добавить файл</button>
+      <button type="button" class="btn" onclick="resetToDemoFiles()">Сброс (6 демо-файлов)</button>
     </div>
-    <div class="topbar-actions">
-      <button class="btn btn-small" id="btnTogglePenalty" onclick="togglePenaltyColumn()">
-        + Расширенный режим: Неустойка и оплата (п. 2.2, 4.1)
-      </button>
-      <button class="btn btn-small" id="btnCopyCsv" onclick="copyTableSummary()">
-        📋 Скопировать реестр (CSV)
-      </button>
-      <button class="btn btn-small" id="btnRunTests" onclick="toggleSelfTests()">
-        Автопроверка (14 тестов)
-      </button>
+
+    <div class="top-bar-right">
+      <div class="date-control-group">
+        <span class="date-label">Дата проверки:</span>
+        <input type="date" id="checkDateInput" class="date-input" value="2026-03-10" onchange="onDateInputChange(this.value)">
+      </div>
+      <button type="button" id="presetBtnMain" class="btn btn-preset active" onclick="setCheckDatePreset('2026-03-10')">10.03.2026</button>
+      <button type="button" id="presetBtnBefore" class="btn btn-preset" onclick="setCheckDatePreset('2026-02-20')">20.02.2026 (до ДС №1)</button>
+      <span class="top-divider"></span>
+      <button type="button" id="togglePenaltyBtn" class="btn btn-toggle" onclick="togglePenaltyColumn()">+ Неустойка (п. 4.1)</button>
+      <button type="button" class="btn" onclick="openSelfTestsModal()">Автотесты (14)</button>
     </div>
   </header>
-  <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ФАЙЛАМИ И ДАТОЙ ПРОВЕРКИ -->
-  <section class="control-bar">
-    <div class="control-group">
-      <span class="control-label">Документы (Drag &amp; Drop):</span>
-      <button class="btn btn-primary" onclick="document.getElementById('fileInputReplace').click()" title="Очистить текущий список и загрузить выбранные .txt файлы">
-        Загрузить .txt файлы
-      </button>
-      <input type="file" id="fileInputReplace" class="file-input-hidden" multiple accept=".txt" onchange="handleFilesUpload(event, true)">
-      <button class="btn" onclick="document.getElementById('fileInputAppend').click()" title="Добавить один или несколько новых .txt файлов к текущему пакету">
-        + Добавить файл к пакету
-      </button>
-      <input type="file" id="fileInputAppend" class="file-input-hidden" multiple accept=".txt" onchange="handleFilesUpload(event, false)">
-      <button class="btn btn-small" onclick="openLiveEditor(true)" title="Быстро создать новый договор или ДС прямо в браузере для проверки на встрече">
-        + Создать тестовый документ
-      </button>
-      <button class="btn btn-small" onclick="resetToDemoFiles()">
-        Сбросить к демо (6 файлов)
-      </button>
-    </div>
-    <div class="control-group">
-      <span class="control-label">Дата проверки:</span>
-      <input type="date" id="checkDateInput" class="date-input" value="2026-03-10" onchange="onDateInputChange(this.value)">
-      <button class="btn btn-small active-preset" id="presetMar10" onclick="setCheckDatePreset('2026-03-10')">
-        10.03.2026 (По ТЗ)
-      </button>
-      <button class="btn btn-small" id="presetFeb20" onclick="setCheckDatePreset('2026-02-20')" title="Проверка состояния до вступления в силу ДС №1 от 01.03.2026">
-        20.02.2026 (До ДС №1)
-      </button>
-    </div>
-  </section>
-  <!-- СВОДНАЯ ПАНЕЛЬ ОПЕРАЦИОННОГО КОНТРОЛЯ (COO SUMMARY STRIP) -->
-  <section class="kpi-strip" id="kpiStrip"></section>
-  <!-- ВЫДВИЖНАЯ ПАНЕЛЬ АВТОТЕСТОВ (14 ТЕСТОВ) -->
-  <section class="selftest-drawer" id="selftestDrawer">
-    <div class="section-header-row">
-      <div class="section-title" id="selftestSummaryTitle">Результаты встроенной самопроверки</div>
-      <button class="btn btn-small" onclick="toggleSelfTests()">Закрыть панель тестов</button>
-    </div>
-    <div class="selftest-grid" id="selftestGrid"></div>
-  </section>
-  <!-- БЛОК БЫСТРЫХ ОТВЕТОВ НА 4 ВОПРОСА + ИНТЕРАКТИВНЫЙ ФИЛЬТР -->
+
+  <!-- Зона 2: Полоса из 4 карточек «Вопросы закупщика» -->
   <section class="questions-section">
-    <div class="section-header-row">
-      <div class="section-title">Контрольные вопросы закупщика (кликните для фильтрации и подсветки цитаты в тексте):</div>
-      <div class="control-group">
-        <span class="control-label">Досье договора:</span>
-        <select id="contractSelectFilter" class="select-input" onchange="onContractFilterChange(this.value)">
-          <option value="ALL">Все договоры</option>
-        </select>
-        <span class="control-label">Поставка раньше (Вопрос 4):</span>
-        <input type="date" id="cutoffDateInput" class="date-input" value="2026-04-01" onchange="onCutoffDateChange(this.value)">
-        <button class="btn btn-small" id="btnClearQuestion" onclick="clearQuestionFilter()" style="display:none;">
-          Сбросить фильтр
-        </button>
-      </div>
+    <div id="questionsGrid" class="questions-grid"></div>
+    <div id="qAnswerDrawer" class="q-answer-drawer">
+      <div id="qDrawerDetails" class="q-drawer-main"></div>
+      <div id="qDrawerCites" class="q-drawer-cites"></div>
+      <button type="button" class="btn-clear-q" onclick="clearQuestionFilter()">✕ Сбросить фильтр</button>
     </div>
-    <div class="questions-grid" id="questionsGrid"></div>
-    <div class="q-answer-drawer" id="qAnswerDrawer"></div>
   </section>
-  <!-- ГЛАВНАЯ РАБОЧАЯ ОБЛАСТЬ -->
-  <main class="workspace">
-    <!-- ЛЕВАЯ ЧАСТЬ: ТАБЛИЦА СВЕРКИ ДОГОВОРОВ -->
+
+  <!-- Зона 3: Основная рабочая область (Таблица 60% слева + Первоисточник 40% справа) -->
+  <main class="workspace-grid">
     <div class="table-panel">
-      <table class="contracts-table">
+      <table id="contractsTable" class="contracts-table">
         <thead>
-          <tr id="tableHeaderRow">
-            <th id="thColContract" style="width: 15%;">Договор и Поставщик</th>
-            <th id="thColDocs" style="width: 19%;">Связанные документы</th>
-            <th id="thColAmount" style="width: 22%;">Действующая сумма (на дату проверки)</th>
-            <th id="thColDelivery" style="width: 18%;">Действующий срок поставки</th>
-            <th id="thPenalty" style="width: 16%; display: none;">Неустойка (п. 4.1) и Оплата (п. 2.2)</th>
-            <th id="thColWarnings" style="width: 26%;">Требует проверки / Отсеянные ловушки</th>
+          <tr>
+            <th style="width:18%;">Договор и Поставщик</th>
+            <th style="width:20%;">Документы пакета</th>
+            <th style="width:20%;">Сумма договора</th>
+            <th style="width:16%;">Срок поставки</th>
+            <th class="col-penalty" style="width:16%;">Неустойка (п. 4.1)</th>
+            <th style="width:26%;">Сведения для проверки</th>
           </tr>
         </thead>
         <tbody id="contractsTableBody"></tbody>
       </table>
     </div>
-    <!-- ПРАВАЯ ЧАСТЬ: ПРОСМОТР ИСХОДНОГО ДОКУМЕНТА, ЖИВОЙ РЕДАКТОР И ТРАССИРОВКА ЦИТАТ -->
+
     <aside class="viewer-panel">
       <div class="viewer-header">
-        <div class="viewer-title">Первоисточник и трассировка цитаты</div>
-        <div class="control-group">
-          <span id="viewerDocStatusBadge"></span>
-          <button class="btn-dark-small" onclick="openLiveEditor(false)" title="Изменить одно поле прямо в тексте открытого документа для проверки пересчета">
-            ✏️ Изменить текст
-          </button>
-        </div>
+        <span class="viewer-title">Первоисточник и проверка цитаты</span>
+        <span id="viewerDocSignBadge" class="badge-sign badge-signed">Подписан обеими сторонами</span>
       </div>
-      <div class="viewer-tabs" id="viewerFileTabs"></div>
-      <!-- ВСТРОЕННЫЙ ЖИВОЙ РЕДАКТОР (ДЛЯ ПРОВЕРКИ НА СОЗВОНЕ) -->
-      <div class="live-editor-box" id="liveEditorBox">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <div class="control-group">
-            <span class="control-label">Имя файла:</span>
-            <input type="text" id="editorFileName" class="editor-input-name" value="07_contract_STN_104.txt">
-          </div>
-          <div class="control-group">
-            <button class="btn btn-primary btn-small" onclick="saveLiveEditor()">Применить и пересчитать таблицу</button>
-            <button class="btn btn-small" onclick="closeLiveEditor()">Отмена</button>
-          </div>
-        </div>
-        <textarea id="editorTextarea" class="editor-textarea" spellcheck="false"></textarea>
-      </div>
-      <div class="active-citation-banner" id="activeCitationBanner">
-        <div id="citationBannerText">Кликните на любую сумму, дату, цитату или предупреждение в таблице для перехода к абзацу исходного текста.</div>
-      </div>
-      <div class="viewer-body" id="viewerBody"></div>
+      <div id="viewerTabs" class="viewer-tabs"></div>
+      <div id="activeCitationBanner" class="citation-banner"></div>
+      <div id="viewerBody" class="viewer-body"></div>
     </aside>
   </main>
-  <!-- ПОДКЛЮЧЕНИЕ ЯДРА СЕМАНТИЧЕСКОГО РАЗБОРА -->
+
+  <!-- Зона 4: Модальное окно для «Автотестов (14)» -->
+  <div id="selftestModalBackdrop" class="modal-backdrop" onclick="onModalBackdropClick(event)">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div id="selftestSummaryTitle" class="modal-title">Пройдено 14 из 14 тестов</div>
+        <button type="button" class="btn" onclick="closeSelfTestsModal()">✕ Закрыть</button>
+      </div>
+      <div id="selftestGrid" class="modal-body"></div>
+    </div>
+  </div>
+
   <script src="engine.js"></script>
   <script>
     var currentFiles = [];
-    var currentCheckDate = '10.03.2026';
-    var currentCutoffDate = '01.04.2026';
+    var currentCheckDateRU = '10.03.2026';
     var resolvedState = null;
     var currentQuestions = [];
     var activeQuestionId = null;
-    var selectedContractFilter = 'ALL';
-    var activeViewerFile = null;
-    var activeParagraphId = null;
-    var activeLabelText = null;
-    var activeExactQuote = null;
-    var activeHighlightToken = null;
     var showPenaltyCol = false;
-    // Безопасный реестр ссылок на цитаты (исключает проблемы кавычек в HTML-атрибутах)
+    var activeViewerState = {
+      fileName: '01_contract.txt',
+      paragraphId: null,
+      labelText: 'Выберите любую сумму, дату, документ или предупреждение в таблице слева для проверки абзаца и цитаты.',
+      exactQuote: null,
+      highlightToken: null
+    };
     var citationRegistry = [];
-    function registerCite(fileName, paragraphId, labelText, exactQuote, highlightToken) { var id = citationRegistry.length;
-      citationRegistry.push({ fileName: fileName || '', paragraphId: paragraphId || 'p_1', labelText: labelText || '', exactQuote: exactQuote || '', highlightToken: highlightToken || ''
-      }); return id;
-    } function openCite(citeId) { var item = citationRegistry[citeId];
+
+    function registerCite(fileName, paragraphId, labelText, exactQuote, highlightToken) {
+      var id = citationRegistry.length;
+      citationRegistry.push({
+        fileName: fileName,
+        paragraphId: paragraphId || 'p_1',
+        labelText: labelText || '',
+        exactQuote: exactQuote || '',
+        highlightToken: highlightToken || ''
+      });
+      return id;
+    }
+
+    function openCite(citeId) {
+      var item = citationRegistry[citeId];
       if (!item) return;
       focusCitation(item.fileName, item.paragraphId, item.labelText, item.exactQuote, item.highlightToken);
-    } window.addEventListener('DOMContentLoaded', function () { if (!window.STNEngine) { alert('Не найден файл engine.js. Убедитесь, что engine.js находится в одной папке с index.html.');
-        return;
-      } setupDragAndDrop();
-      resetToDemoFiles();
-    }); function setupDragAndDrop() { window.addEventListener('dragover', function (e) { e.preventDefault();
-        document.body.className = 'drag-over';
-      }); window.addEventListener('dragleave', function (e) { e.preventDefault();
-        document.body.className = '';
-      }); window.addEventListener('drop', function (e) { e.preventDefault();
-        document.body.className = '';
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) { readUploadedFileList(e.dataTransfer.files, false);
-        } }); } function resetToDemoFiles() { currentFiles = [];
-      var defs = window.STNEngine.DEFAULT_DOCUMENTS;
-      for (var i = 0; i < defs.length; i++) { currentFiles.push({ fileName: defs[i].fileName, content: defs[i].content
-        }); } activeQuestionId = null;
-      selectedContractFilter = 'ALL';
-      closeLiveEditor();
-      recomputeAndRender();
-    } function handleFilesUpload(event, replaceAll) { var rawFiles = event.target.files || [];
-      if (rawFiles.length === 0) return;
-      readUploadedFileList(rawFiles, replaceAll);
-      event.target.value = '';
-    } function readUploadedFileList(rawFiles, replaceAll) { var fileList = [];
-      for (var i = 0; i < rawFiles.length; i++) { fileList.push(rawFiles[i]);
-      } var loadedDocs = [];
-      var remaining = fileList.length;
-      fileList.forEach(function (file) { var reader = new FileReader();
-        reader.onload = function (e) { loadedDocs.push({ fileName: file.name, content: String(e.target.result || '')
-          }); remaining--;
-          if (remaining === 0) { if (replaceAll) { currentFiles = loadedDocs;
-            } else { var map = {};
-              var k;
-              for (k = 0; k < currentFiles.length; k++) { map[currentFiles[k].fileName] = currentFiles[k];
-              } for (k = 0; k < loadedDocs.length; k++) { map[loadedDocs[k].fileName] = loadedDocs[k];
-              } currentFiles = [];
-              var keys = Object.keys(map);
-              for (k = 0; k < keys.length; k++) { currentFiles.push(map[keys[k]]);
-              } } activeQuestionId = null;
-            selectedContractFilter = 'ALL';
-            if (loadedDocs.length > 0) { activeViewerFile = loadedDocs[0].fileName;
-              activeParagraphId = 'p_1';
-            } closeLiveEditor();
-            recomputeAndRender();
-          } }; reader.readAsText(file, 'UTF-8');
-      }); } // Встроенный редактор текста и генератор нового тестового документа для лайв-демо
-    function openLiveEditor(isNewFile) { var box = document.getElementById('liveEditorBox');
-      var nameInput = document.getElementById('editorFileName');
-      var area = document.getElementById('editorTextarea');
-      if (isNewFile) { nameInput.value = '07_contract_STN_104.txt';
-        area.value =
-          'ДОГОВОР ПОСТАВКИ № STN-104\n' + 'Дата: 02.03.2026\n' + 'Статус: подписан обеими сторонами 02.03.2026.\n\n' + '1.1. Покупатель: ООО «СеверМет». Поставщик: ООО «ТехноСплав».\n' + '1.2. Предмет: поставка комплекта насосного оборудования.\n\n' + '2.1. Общая стоимость поставки составляет 650 000 рублей, включая НДС. Указанная сумма — итоговая стоимость договора.\n\n' +
-          '3.1. Поставщик обязуется поставить оборудование не позднее 25.03.2026.\n\n' + '4.1. Неустойка за просрочку поставки составляет 0,2% стоимости просроченной части поставки за каждый день, но не более 10% стоимости этой части.';
-      } else { var doc = resolvedState && resolvedState.docsByName[activeViewerFile];
-        if (!doc) return;
-        nameInput.value = doc.fileName;
-        area.value = doc.rawText;
-      } box.className = 'live-editor-box visible';
-    } function closeLiveEditor() { document.getElementById('liveEditorBox').className = 'live-editor-box';
-    } function saveLiveEditor() { var fname = document.getElementById('editorFileName').value.replace(/^\s+|\s+$/g, '') || 'custom_doc.txt';
-      var text = document.getElementById('editorTextarea').value;
-      var found = false;
-      for (var i = 0; i < currentFiles.length; i++) { if (currentFiles[i].fileName === fname) { currentFiles[i].content = text;
-          found = true;
-          break;
-        } } if (!found) { currentFiles.push({ fileName: fname, content: text });
-      } activeViewerFile = fname;
-      activeParagraphId = 'p_1';
-      closeLiveEditor();
-      recomputeAndRender();
-    } function onDateInputChange(isoVal) { if (!isoVal) return;
-      var parts = isoVal.split('-');
-      if (parts.length === 3) { currentCheckDate = parts[2] + '.' + parts[1] + '.' + parts[0];
-      } document.getElementById('presetMar10').className = 'btn btn-small' + (isoVal === '2026-03-10' ? ' active-preset' : '');
-      document.getElementById('presetFeb20').className = 'btn btn-small' + (isoVal === '2026-02-20' ? ' active-preset' : '');
-      recomputeAndRender();
-    } function setCheckDatePreset(isoVal) { var input = document.getElementById('checkDateInput');
-      input.value = isoVal;
-      onDateInputChange(isoVal);
-    } function onCutoffDateChange(isoVal) { if (!isoVal) return;
-      var parts = isoVal.split('-');
-      if (parts.length === 3) { currentCutoffDate = parts[2] + '.' + parts[1] + '.' + parts[0];
-      } activeQuestionId = 'q4';
-      selectedContractFilter = 'ALL';
-      recomputeAndRender();
-    } function onContractFilterChange(val) { selectedContractFilter = val || 'ALL';
+    }
+
+    function setupDragAndDrop() {
+      window.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        document.body.classList.add('drag-over');
+      });
+      window.addEventListener('dragleave', function (e) {
+        if (!e.relatedTarget || e.relatedTarget.nodeName === 'HTML') {
+          document.body.classList.remove('drag-over');
+        }
+      });
+      window.addEventListener('drop', function (e) {
+        e.preventDefault();
+        document.body.classList.remove('drag-over');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          readUploadedFileList(e.dataTransfer.files, false);
+        }
+      });
+    }
+
+    function resetToDemoFiles() {
+      currentFiles = window.STNEngine.DEFAULT_DOCUMENTS.map(function (d) {
+        return { fileName: d.fileName, content: d.content };
+      });
       activeQuestionId = null;
-      document.getElementById('btnClearQuestion').style.display = (selectedContractFilter !== 'ALL') ? 'inline-flex' : 'none';
-      if (selectedContractFilter !== 'ALL') { for (var i = 0; i < resolvedState.contracts.length; i++) { var c = resolvedState.contracts[i];
-          if (c.contractId === selectedContractFilter) { focusCitation(c.activeAmount.fileName, c.activeAmount.paragraphId, 'Досье договора ' + c.contractId, c.activeAmount.exactQuote, c.activeAmount.displayValue);
-            break;
-          } } } renderQuestions();
-      renderTable();
-    } function togglePenaltyColumn() { showPenaltyCol = !showPenaltyCol;
-      document.getElementById('thPenalty').style.display = showPenaltyCol ? '' : 'none';
-      document.getElementById('thColContract').style.width = showPenaltyCol ? '13%' : '15%';
-      document.getElementById('thColDocs').style.width = showPenaltyCol ? '16%' : '19%';
-      document.getElementById('thColAmount').style.width = showPenaltyCol ? '19%' : '22%';
-      document.getElementById('thColDelivery').style.width = showPenaltyCol ? '15%' : '18%';
-      document.getElementById('thPenalty').style.width = '15%';
-      document.getElementById('thColWarnings').style.width = showPenaltyCol ? '22%' : '26%';
-      var btn = document.getElementById('btnTogglePenalty');
-      btn.textContent = showPenaltyCol
-        ? 'Скрыть колонку «Неустойка и оплата (п. 2.2, 4.1)»'
-        : '+ Расширенный режим: Неустойка и оплата (п. 2.2, 4.1)';
-      btn.className = 'btn btn-small' + (showPenaltyCol ? ' active-preset' : '');
-      renderTable();
-    } function copyTableSummary() { if (!resolvedState || !resolvedState.contracts) return;
-      var lines = ['Договор;Поставщик;Действующая сумма;Основание суммы;Срок поставки;Основание срока;Неустойка;Предупреждения'];
-      for (var i = 0; i < resolvedState.contracts.length; i++) { var c = resolvedState.contracts[i];
-        var wTitles = [];
-        for (var j = 0; j < c.warnings.length; j++) { wTitles.push(c.warnings[j].title);
-        } lines.push([
-          c.contractId, c.supplier, c.activeAmount.displayValue, c.activeAmount.fileName + ' (п. ' + (c.activeAmount.clause || '-') + ')', c.activeDeliveryDate.value, c.activeDeliveryDate.fileName + ' (п. ' + (c.activeDeliveryDate.clause || '-') + ')', c.activePenalty.displayValue,
-          wTitles.join(' | ') || 'Нет'
-        ].join(';'));
-      } var csvText = lines.join('\n');
-      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(csvText);
-      } var btn = document.getElementById('btnCopyCsv');
-      var oldText = btn.textContent;
-      btn.textContent = '✅ Скопировано в буфер (' + resolvedState.contracts.length + ' дог.)';
-      setTimeout(function () { btn.textContent = oldText; }, 2000);
-    } function recomputeAndRender() { citationRegistry = [];
-      resolvedState = window.STNEngine.resolveContracts(currentFiles, currentCheckDate);
-      currentQuestions = window.STNEngine.answerQuestions(resolvedState, currentCutoffDate);
-      if (!activeViewerFile || !resolvedState.docsByName[activeViewerFile]) { activeViewerFile = currentFiles.length > 0 ? currentFiles[0].fileName : null;
-        activeParagraphId = 'p_1';
-      } renderKpiStrip();
-      renderContractSelect();
+      setCheckDatePreset('2026-03-10');
+      focusCitation('02_amendment_signed.txt', 'p_3', 'Демо-пакет (6 файлов): проверка срока поставки STN-101 по подписанному ДС № 1', 'Поставщик обязуется поставить оборудование не позднее 30.04.2026', '30.04.2026');
+    }
+
+    function handleFilesUpload(event, replaceAll) {
+      var files = event.target.files;
+      if (files && files.length > 0) {
+        readUploadedFileList(files, replaceAll);
+      }
+      event.target.value = '';
+    }
+
+    function readUploadedFileList(rawFiles, replaceAll) {
+      var list = Array.prototype.slice.call(rawFiles);
+      var loaded = [];
+      var remaining = list.length;
+
+      list.forEach(function (file) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          loaded.push({ fileName: file.name, content: String(ev.target.result || '') });
+          remaining--;
+          if (remaining === 0) {
+            if (replaceAll) {
+              currentFiles = loaded;
+            } else {
+              loaded.forEach(function (nf) {
+                var replaced = false;
+                for (var i = 0; i < currentFiles.length; i++) {
+                  if (currentFiles[i].fileName === nf.fileName) {
+                    currentFiles[i] = nf;
+                    replaced = true;
+                    break;
+                  }
+                }
+                if (!replaced) currentFiles.push(nf);
+              });
+            }
+            activeQuestionId = null;
+            recomputeAndRender();
+            if (loaded[0]) {
+              focusCitation(loaded[0].fileName, 'p_1', 'Загружен документ: ' + loaded[0].fileName, '', '');
+            }
+          }
+        };
+        reader.readAsText(file, 'UTF-8');
+      });
+    }
+
+    function isoToRuDate(isoVal) {
+      var m = String(isoVal || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? (m[3] + '.' + m[2] + '.' + m[1]) : '10.03.2026';
+    }
+
+    function onDateInputChange(isoVal) {
+      currentCheckDateRU = isoToRuDate(isoVal);
+      document.getElementById('presetBtnMain').className = 'btn btn-preset' + (isoVal === '2026-03-10' ? ' active' : '');
+      document.getElementById('presetBtnBefore').className = 'btn btn-preset' + (isoVal === '2026-02-20' ? ' active' : '');
+      recomputeAndRender();
+    }
+
+    function setCheckDatePreset(isoVal) {
+      document.getElementById('checkDateInput').value = isoVal;
+      onDateInputChange(isoVal);
+    }
+
+    function togglePenaltyColumn() {
+      showPenaltyCol = !showPenaltyCol;
+      var btn = document.getElementById('togglePenaltyBtn');
+      var tbl = document.getElementById('contractsTable');
+      btn.className = 'btn btn-toggle' + (showPenaltyCol ? ' active' : '');
+      btn.textContent = showPenaltyCol ? '✓ Неустойка (п. 4.1)' : '+ Неустойка (п. 4.1)';
+      tbl.className = 'contracts-table' + (showPenaltyCol ? ' show-penalty' : '');
+    }
+
+    function recomputeAndRender() {
+      citationRegistry = [];
+      resolvedState = window.STNEngine.resolveContracts(currentFiles, currentCheckDateRU);
+      currentQuestions = window.STNEngine.answerQuestions(resolvedState, '01.04.2026');
       renderQuestions();
       renderTable();
       renderViewer();
-    } function renderKpiStrip() { var s = resolvedState.portfolioSummary;
-      var strip = document.getElementById('kpiStrip');
-      strip.innerHTML =
-        '<div class="kpi-cell">' + '<div class="kpi-label">Пакет на дату проверки (' + escapeHtml(resolvedState.checkDateStr) + ')</div>' + '<div class="kpi-val">' + s.totalContracts + ' договора (' + s.totalFiles + ' файлов)</div>' + '<div class="kpi-sub">Связаны по номеру внутри текста</div>' +
-        '</div>' + '<div class="kpi-cell">' + '<div class="kpi-label">Подтвержденная сумма обязательств</div>' + '<div class="kpi-val">' + escapeHtml(s.totalConfirmedFormatted) + '</div>' + '<div class="kpi-sub">По ' + s.confirmedCount + ' договорам с согласованной ценой</div>' +
-        '</div>' + '<div class="kpi-cell">' + '<div class="kpi-label">Отсутствуют сведения о цене</div>' + '<div class="kpi-val" style="color:' + (s.missingAmountCount > 0 ? 'var(--status-err-text)' : 'var(--status-ok-text)') + ';">' + s.missingAmountCount + ' дог. (нет данных)' +
-          '</div>' + '<div class="kpi-sub">Контроль полноты приложений и спецификаций</div>' + '</div>' + '<div class="kpi-cell">' + '<div class="kpi-label">Несогласованные проекты и письма</div>' + '<div class="kpi-val" style="color:var(--status-warn-text);">Дельта: ' + escapeHtml(s.unapprovedDeltaFormatted) + '</div>' +
-          '<div class="kpi-sub">Запросов переноса срока поставки: ' + s.unapprovedDateChangesCount + '</div>' + '</div>' + '<div class="kpi-cell">' + '<div class="kpi-label">Защита от ошибок (Анти-галлюцинации)</div>' + '<div class="kpi-val" style="color:var(--status-ok-text);">Отсеяно ловушек: ' + s.totalTrapsCaught + '</div>' +
-          '<div class="kpi-sub">Аванс, лимит бюджета, дата оплаты, приемка</div>' + '</div>';
-    } function renderContractSelect() { var sel = document.getElementById('contractSelectFilter');
-      var html = '<option value="ALL">Все договоры (' + resolvedState.contracts.length + ')</option>';
-      for (var i = 0; i < resolvedState.contracts.length; i++) { var c = resolvedState.contracts[i];
-        var selectedAttr = (selectedContractFilter === c.contractId) ? ' selected' : '';
-        html += '<option value="' + escapeAttr(c.contractId) + '"' + selectedAttr + '>' + escapeHtml(c.contractId + ' — ' + c.supplier) + '</option>';
-      } sel.innerHTML = html;
-    } function renderQuestions() { var grid = document.getElementById('questionsGrid');
-      var drawer = document.getElementById('qAnswerDrawer');
-      var clearBtn = document.getElementById('btnClearQuestion');
-      var cardsHtml = [];
-      for (var i = 0; i < currentQuestions.length; i++) { var q = currentQuestions[i];
+    }
+
+    function renderQuestions() {
+      var gridHtml = [];
+      var activeQ = null;
+
+      for (var i = 0; i < currentQuestions.length; i++) {
+        var q = currentQuestions[i];
         var isActive = (q.id === activeQuestionId);
-        cardsHtml.push(
-          '<div class="q-card ' + (isActive ? 'active' : '') + '" onclick="selectQuestion(\'' + q.id + '\')">' + '<div class="q-title">' + escapeHtml(q.question) + '</div>' + '<div class="q-short-answer">' + escapeHtml(q.shortAnswer) + '</div>' + '</div>'
-        );
-      } grid.innerHTML = cardsHtml.join('');
-      var activeQ = null;
-      for (i = 0; i < currentQuestions.length; i++) { if (currentQuestions[i].id === activeQuestionId) { activeQ = currentQuestions[i];
-          break;
-        } } if (activeQ) { clearBtn.style.display = 'inline-flex';
-        drawer.className = 'q-answer-drawer visible';
-        var citesHtml = [];
-        for (i = 0; i < activeQ.citations.length; i++) { var c = activeQ.citations[i];
-          var cid = registerCite(c.fileName, c.paragraphId, c.label, c.quote || '', activeQ.shortAnswer);
-          citesHtml.push(
-            '<button class="cite-btn" onclick="openCite(' + cid + ')">' + '📄 ' + escapeHtml(c.label) + '</button>'
-          );
-        } drawer.innerHTML =
-          '<div class="q-answer-text"><strong>Проверенный ответ:</strong> ' + escapeHtml(activeQ.details) + '</div>' + '<div class="q-citations-row">' + '<span class="control-label">Перейти к основанию в первоисточнике:</span>' + citesHtml.join('') + '</div>';
-      } else if (selectedContractFilter !== 'ALL') { // Если выбран конкретный договор в селекторе (например, новый STN-104 на интервью), выводим его сводное досье
-        var targetC = null;
-        for (i = 0; i < resolvedState.contracts.length; i++) { if (resolvedState.contracts[i].contractId === selectedContractFilter) { targetC = resolvedState.contracts[i];
-            break;
-          } } if (targetC) { clearBtn.style.display = 'inline-flex';
-          drawer.className = 'q-answer-drawer visible';
-          var cidAmt = registerCite(targetC.activeAmount.fileName, targetC.activeAmount.paragraphId, 'Сумма ' + targetC.contractId, targetC.activeAmount.exactQuote, targetC.activeAmount.displayValue);
-          var cidDel = registerCite(targetC.activeDeliveryDate.fileName, targetC.activeDeliveryDate.paragraphId, 'Срок ' + targetC.contractId, targetC.activeDeliveryDate.exactQuote, targetC.activeDeliveryDate.value);
-          var cidPen = registerCite(targetC.activePenalty.fileName, targetC.activePenalty.paragraphId, 'Неустойка ' + targetC.contractId, targetC.activePenalty.exactQuote, targetC.activePenalty.displayValue);
-          drawer.innerHTML =
-            '<div class="q-answer-text"><strong>Сводное досье по договору ' + escapeHtml(targetC.contractId) + ' (' + escapeHtml(targetC.supplier) + ') на ' + escapeHtml(resolvedState.checkDateStr) + ':</strong> ' + 'Действующая сумма: <b>' + escapeHtml(targetC.activeAmount.displayValue) + '</b>; ' +
-            'Срок поставки: <b>' + escapeHtml(targetC.activeDeliveryDate.value) + '</b>; ' + 'Неустойка: <b>' + escapeHtml(targetC.activePenalty.displayValue) + '</b>.</div>' + '<div class="q-citations-row">' + '<span class="control-label">Проверить в тексте:</span>' +
-              '<button class="cite-btn" onclick="openCite(' + cidAmt + ')">📄 Основание суммы (' + escapeHtml(targetC.activeAmount.fileName) + ')</button>' + '<button class="cite-btn" onclick="openCite(' + cidDel + ')">📄 Основание срока (' + escapeHtml(targetC.activeDeliveryDate.fileName) + ')</button>' +
-              '<button class="cite-btn" onclick="openCite(' + cidPen + ')">📄 Основание неустойки (' + escapeHtml(targetC.activePenalty.fileName) + ')</button>' + '</div>';
-        } } else { clearBtn.style.display = 'none';
-        drawer.className = 'q-answer-drawer';
-        drawer.innerHTML = '';
-      } } function selectQuestion(qId) { if (activeQuestionId === qId) { activeQuestionId = null;
-      } else { activeQuestionId = qId;
-        selectedContractFilter = 'ALL';
-        document.getElementById('contractSelectFilter').value = 'ALL';
-        for (var i = 0; i < currentQuestions.length; i++) { var q = currentQuestions[i];
-          if (q.id === qId && q.citations && q.citations.length > 0) { var firstCite = q.citations[0];
-            focusCitation(firstCite.fileName, firstCite.paragraphId, firstCite.label, firstCite.quote || '', q.shortAnswer);
-            break;
-          } } } renderQuestions();
-      renderTable();
-    } function clearQuestionFilter() { activeQuestionId = null;
-      selectedContractFilter = 'ALL';
-      document.getElementById('contractSelectFilter').value = 'ALL';
-      renderQuestions();
-      renderTable();
-    } function renderTable() { var tbody = document.getElementById('contractsTableBody');
-      var activeQ = null;
-      var i, j;
-      var colCount = showPenaltyCol ? 6 : 5;
-      for (i = 0; i < currentQuestions.length; i++) { if (currentQuestions[i].id === activeQuestionId) { activeQ = currentQuestions[i];
-          break;
-        } } if (resolvedState.contracts.length === 0) { tbody.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align:center; padding:24px;">Нет загруженных документов. Загрузите файлы .txt.</td></tr>';
-        return;
-      } var rowsHtml = [];
-      for (i = 0; i < resolvedState.contracts.length; i++) { var c = resolvedState.contracts[i];
-        var isMatch = true;
-        if (activeQ) { isMatch = (activeQ.filterContracts.indexOf(c.contractId) !== -1);
-        } else if (selectedContractFilter !== 'ALL') { isMatch = (c.contractId === selectedContractFilter);
-        } var hasActiveFilter = Boolean(activeQ || selectedContractFilter !== 'ALL');
-        var rowClass = '';
-        if (hasActiveFilter) { rowClass = isMatch ? 'highlighted-row' : 'filtered-out';
-        } // 1. Связанные документы
-        var docsParts = [];
-        for (j = 0; j < c.relatedDocs.length; j++) { var d = c.relatedDocs[j];
-          var badgeClass = d.isSigned ? 'badge-signed' : 'badge-unsigned';
-          var docCid = registerCite(d.fileName, 'p_1', d.docTitle, '', c.contractId);
-          docsParts.push(
-            '<div class="doc-chip" onclick="openCite(' + docCid + ')">' + '<div class="doc-chip-header">' + '<span>' + escapeHtml(d.docTitle) + '</span>' + '<span class="badge ' + badgeClass + '">' + escapeHtml(d.roleLabel) + '</span>' + '</div>' + '<div style="color: var(--text-muted); font-family: var(--font-mono);">' + escapeHtml(d.fileName) + '</div>' +
-            '</div>'
-          );
-        } // 2. Действующая сумма с точной цитатой и историей
-        var amt = c.activeAmount;
-        var amtMissing = (amt.status === 'missing');
-        var amtToken = amt.rawNumber ? amt.rawNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : 'приложении № 1';
-        var amtCid = registerCite(amt.fileName, amt.paragraphId, 'Сумма договора ' + c.contractId, amt.exactQuote || amt.quote, amtToken);
-        var amtHistParts = [];
-        for (j = 0; j < c.amountHistory.length; j++) { var hA = c.amountHistory[j];
-          var hAToken = hA.rawNumber ? hA.rawNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : '';
-          var hACid = registerCite(hA.fileName, hA.paragraphId, 'Прежняя сумма (' + hA.fileName + ')', hA.exactQuote || hA.quote, hAToken);
-          amtHistParts.push(
-            '<div class="history-box">' + 'Было в базовом договоре: <span class="history-strike" onclick="openCite(' + hACid + ')">' + escapeHtml(hA.displayValue) + ' (' + escapeHtml(hA.fileName) + ', п. ' + escapeHtml(hA.clause || '2.1') + ')' + '</span>' + '</div>'
-          );
-        } var amountCellHtml =
-          '<div class="fact-box">' + '<div>' + '<span class="fact-main-value ' + (amtMissing ? 'missing-val' : '') + '" onclick="openCite(' + amtCid + ')">' + escapeHtml(amt.displayValue) + '</span>' + '</div>' + (amt.changedBy ? ('<div style="font-size:11px; color:var(--status-ok-text); font-weight:700;">Изменено: ' + escapeHtml(amt.changedBy) + ' (в силе с ' + escapeHtml(amt.effectiveDate) + ')</div>') : '') +
-            '<div class="exact-quote-snippet" onclick="openCite(' + amtCid + ')">' + '«' + escapeHtml(amt.exactQuote || amt.quote) + '»' + '</div>' + '<button class="cite-btn" onclick="openCite(' + amtCid + ')">' + '📄 ' + escapeHtml(amt.fileName) + (amt.clause ? (', п. ' + escapeHtml(amt.clause)) : '') + ' [абз. #' + escapeHtml(amt.paragraphId) + ']' +
-            '</button>' + amtHistParts.join('') + '</div>';
-        // 3. Действующий срок поставки с точной цитатой и историей
-        var deliv = c.activeDeliveryDate;
-        var delivMissing = (deliv.status === 'missing');
-        var delivCid = registerCite(deliv.fileName, deliv.paragraphId, 'Срок поставки ' + c.contractId, deliv.exactQuote || deliv.quote, deliv.value);
-        var delivHistParts = [];
-        for (j = 0; j < c.deliveryDateHistory.length; j++) { var hD = c.deliveryDateHistory[j];
-          var hDCid = registerCite(hD.fileName, hD.paragraphId, 'Прежний срок (' + hD.fileName + ')', hD.exactQuote || hD.quote, hD.value);
-          delivHistParts.push(
-            '<div class="history-box">' + 'Было в базовом договоре: <span class="history-strike" onclick="openCite(' + hDCid + ')">' + escapeHtml(hD.value) + ' (' + escapeHtml(hD.fileName) + ', п. ' + escapeHtml(hD.clause || '3.1') + ')' + '</span>' + '</div>'
-          );
-        } var deliveryCellHtml =
-          '<div class="fact-box">' + '<div>' + '<span class="fact-main-value ' + (delivMissing ? 'missing-val' : '') + '" onclick="openCite(' + delivCid + ')">' + escapeHtml(deliv.value) + '</span>' + '</div>' + (deliv.changedBy ? ('<div style="font-size:11px; color:var(--status-ok-text); font-weight:700;">Изменено: ' + escapeHtml(deliv.changedBy) + ' (в силе с ' + escapeHtml(deliv.effectiveDate) + ')</div>') : '') +
-            '<div class="exact-quote-snippet" onclick="openCite(' + delivCid + ')">' + '«' + escapeHtml(deliv.exactQuote || deliv.quote) + '»' + '</div>' + '<button class="cite-btn" onclick="openCite(' + delivCid + ')">' + '📄 ' + escapeHtml(deliv.fileName) + (deliv.clause ? (', п. ' + escapeHtml(deliv.clause)) : '') + ' [абз. #' + escapeHtml(deliv.paragraphId) + ']' +
-            '</button>' + delivHistParts.join('') + '</div>';
-        // 4. Расширенная колонка: Неустойка (п. 4.1) и Условия оплаты (п. 2.2)
-        var pen = c.activePenalty;
-        var penMissing = (pen.status === 'missing');
-        var penToken = pen.ratePercent ? (String(pen.ratePercent).replace('.', ',') + '%') : 'не установлена';
-        var penCid = registerCite(pen.fileName, pen.paragraphId, 'Неустойка ' + c.contractId, pen.exactQuote || pen.quote, penToken);
-        var penHistParts = [];
-        if (c.penaltyHistory) { for (j = 0; j < c.penaltyHistory.length; j++) { var hP = c.penaltyHistory[j];
-            var hPCid = registerCite(hP.fileName, hP.paragraphId, 'Прежняя неустойка (' + hP.fileName + ')', hP.exactQuote || hP.quote, '');
-            penHistParts.push(
-              '<div class="history-box">' + 'Было: <span class="history-strike" onclick="openCite(' + hPCid + ')">' + escapeHtml(hP.displayValue) + ' (' + escapeHtml(hP.fileName) + ')' + '</span>' + '</div>'
-            );
-          } } var pay = c.activePaymentTerms;
-        var payCid = pay ? registerCite(pay.fileName, pay.paragraphId, 'Условия оплаты ' + c.contractId, pay.exactQuote || pay.quote, '') : null;
-        var penaltyCellHtml = showPenaltyCol ? (
-          '<td>' + '<div class="fact-box">' + '<div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Неустойка (п. 4.1):</div>' + '<div>' + '<span class="fact-main-value ' + (penMissing ? 'missing-val' : '') + '" onclick="openCite(' + penCid + ')">' +
-                  escapeHtml(pen.displayValue) + '</span>' + '</div>' + (pen.financialNote ? ('<div style="font-size:11px; color:var(--status-warn-text); font-weight:600;">В деньгах: ' + escapeHtml(pen.financialNote) + '</div>') : '') + '<div class="exact-quote-snippet" onclick="openCite(' + penCid + ')">' +
-                '«' + escapeHtml(pen.exactQuote || pen.quote) + '»' + '</div>' + '<button class="cite-btn" onclick="openCite(' + penCid + ')">' + '📄 ' + escapeHtml(pen.fileName) + (pen.clause ? (', п. ' + escapeHtml(pen.clause)) : '') + '</button>' + penHistParts.join('') +
-              (pay ? (
-                '<div style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border-color);">' + '<div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Условия оплаты (п. 2.2):</div>' + '<div style="font-size:11.5px; margin-top:2px; cursor:pointer;" onclick="openCite(' + payCid + ')">' +
-                    escapeHtml(pay.displayValue) + ' <u style="color:var(--accent-primary);">(' + escapeHtml(pay.fileName) + ', п. ' + escapeHtml(pay.clause || '2.2') + ')</u>' + '</div>' + '</div>'
-              ) : '') + '</div>' + '</td>'
-        ) : '';
-        // 5. Предупреждения и отсеянные ловушки
-        var warnsParts = [];
-        for (j = 0; j < c.warnings.length; j++) { var w = c.warnings[j];
-          var wToken = w.proposedDate || (w.proposedAmountRaw ? w.proposedAmountRaw.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : '');
-          var wCid = registerCite(w.fileName, w.paragraphId, w.title, w.quote || '', wToken);
-          warnsParts.push(
-            '<div class="warn-card ' + (w.severity === 'high' ? 'high' : '') + '" onclick="openCite(' + wCid + ')">' + '<div class="warn-title">⚠️ ' + escapeHtml(w.title) + '</div>' + '<div class="warn-desc">' + escapeHtml(w.description) + '</div>' + '<div style="font-family:var(--font-mono); font-size:10.5px; color:var(--accent-primary);">' +
-                '📄 Проверить: ' + escapeHtml(w.fileName) + (w.clause ? (', п. ' + escapeHtml(w.clause)) : '') + ' [абз. #' + escapeHtml(w.paragraphId) + ']' + '</div>' + '</div>'
-          );
-        } var trapsParts = [];
-        for (j = 0; j < c.ignoredTraps.length; j++) { var t = c.ignoredTraps[j];
-          var tToken = t.value.replace(/\s*руб\..*$/, '');
-          var tCid = registerCite(t.fileName, t.paragraphId, t.label, t.quote || '', tToken);
-          trapsParts.push(
-            '<div class="trap-item" onclick="openCite(' + tCid + ')">' + '<strong>Отсеяно (' + escapeHtml(t.value) + '):</strong> ' + escapeHtml(t.label) + ' — <u>' + escapeHtml(t.fileName) + ', п. ' + escapeHtml(t.clause || '') + '</u>' + '</div>'
-          );
-        } var trapsHtml = trapsParts.length > 0 ? (
-          '<div class="traps-box">' + '<div class="traps-title">Отфильтрованные числа-ловушки (не влияют на итог):</div>' + trapsParts.join('') + '</div>'
-        ) : '';
-        rowsHtml.push(
-          '<tr class="' + rowClass + '">' + '<td>' + '<div class="contract-id">' + escapeHtml(c.contractId) + '</div>' + '<div class="supplier-name">' + escapeHtml(c.supplier) + '</div>' + '<div class="contract-meta">Покупатель: ' + escapeHtml(c.buyer) + '</div>' +
-              (c.subject ? ('<div class="contract-meta" style="margin-top:4px;">Предмет: ' + escapeHtml(c.subject) + '</div>') : '') + '</td>' + '<td><div class="doc-list">' + docsParts.join('') + '</div></td>' + '<td>' + amountCellHtml + '</td>' + '<td>' + deliveryCellHtml + '</td>' +
-            penaltyCellHtml + '<td>' + '<div class="warnings-stack">' + (warnsParts.length > 0 ? warnsParts.join('') : '<div style="font-size:12px; color:var(--status-ok-text);">Нет несогласованных изменений</div>') + trapsHtml + '</div>' + '</td>' + '</tr>'
-        );
-      } tbody.innerHTML = rowsHtml.join('');
-    } function focusCitation(fileName, paragraphId, labelText, exactQuote, highlightToken) { activeViewerFile = fileName;
-      activeParagraphId = paragraphId || 'p_1';
-      activeLabelText = labelText || '';
-      activeExactQuote = exactQuote || '';
-      activeHighlightToken = highlightToken || '';
-      renderViewer();
-      setTimeout(function () { var el = document.getElementById('viewer_' + activeParagraphId);
-        if (el && el.scrollIntoView) { el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } }, 40); } /**
-     * Подсвечивает внутри активного абзаца ключевое значение (сумму, дату или вложенную цитату)
-     */
-    function highlightQuoteInText(paraText, exactQuote, highlightToken) { var safePara = escapeHtml(paraText);
-      // 1. Если есть точное ключевое значение (например, "1 380 000" или "30.04.2026") внутри абзаца
-      if (highlightToken) { var safeToken = escapeHtml(highlightToken);
-        if (safeToken.length >= 3 && safePara.indexOf(safeToken) !== -1) { return safePara.replace(safeToken, '<mark class="quote-mark">' + safeToken + '</mark>');
-        } } // 2. Если есть вложенная цитата, которая короче самого абзаца
-      if (exactQuote) { var safeQuote = escapeHtml(exactQuote);
-        if (safeQuote.length > 4 && safeQuote.length < safePara.length && safePara.indexOf(safeQuote) !== -1) { return safePara.replace(safeQuote, '<mark class="quote-mark">' + safeQuote + '</mark>');
-        } } return safePara;
-    } function renderViewer() { var tabsContainer = document.getElementById('viewerFileTabs');
-      var bodyContainer = document.getElementById('viewerBody');
-      var statusBadge = document.getElementById('viewerDocStatusBadge');
-      var bannerText = document.getElementById('citationBannerText');
-      var tabsHtml = [];
-      var i;
-      for (i = 0; i < resolvedState.parsedDocs.length; i++) { var d = resolvedState.parsedDocs[i];
-        var isAct = (d.fileName === activeViewerFile);
-        var tabCid = registerCite(d.fileName, 'p_1', 'Просмотр файла ' + d.fileName, '', '');
-        tabsHtml.push(
-          '<button class="file-tab ' + (isAct ? 'active' : '') + '" onclick="openCite(' + tabCid + ')">' + escapeHtml(d.fileName) + '</button>'
-        );
-      } tabsContainer.innerHTML = tabsHtml.join('');
-      var doc = resolvedState.docsByName[activeViewerFile];
-      if (!doc) { bodyContainer.innerHTML = '<div>Выберите документ для просмотра.</div>';
-        return;
-      } statusBadge.innerHTML = doc.isSigned
-        ? '<span class="badge badge-signed">Подписан обеими сторонами</span>'
-        : '<span class="badge badge-unsigned">Не подписан / Требует проверки</span>';
-      if (activeLabelText) { bannerText.innerHTML =
-          '<div><strong>Проверяемое основание:</strong> ' + escapeHtml(activeLabelText) + ' — файл <code>' + escapeHtml(doc.fileName) + '</code>, абзац <code>#' + escapeHtml(activeParagraphId) + '</code></div>' + (activeExactQuote ? ('<div style="font-style:italic; color:var(--text-secondary);">Точная цитата: «' + escapeHtml(activeExactQuote) + '»</div>') : '');
-      } else { bannerText.innerHTML = 'Файл: <code>' + escapeHtml(doc.fileName) + '</code> (' + escapeHtml(doc.docTitle) + ')';
-      } var parasHtml = [];
-      for (i = 0; i < doc.paragraphs.length; i++) { var p = doc.paragraphs[i];
-        var isTarget = (p.id === activeParagraphId);
-        var renderedText = isTarget
-          ? highlightQuoteInText(p.text, activeExactQuote, activeHighlightToken)
-          : escapeHtml(p.text);
-        var pCid = registerCite(doc.fileName, p.id, 'Абзац #' + p.id + (p.clause ? ' (п. ' + p.clause + ')' : ''), p.text, '');
-        parasHtml.push(
-          '<div class="para-row ' + (isTarget ? 'active-para' : '') + '" id="viewer_' + p.id + '" onclick="openCite(' + pCid + ')">' + '<div class="para-id">#' + escapeHtml(p.id) + (p.clause ? ('<br>п.' + escapeHtml(p.clause)) : '') + '</div>' + '<div class="para-text">' + renderedText + '</div>' +
+        if (isActive) activeQ = q;
+        gridHtml.push(
+          '<div class="q-card' + (isActive ? ' active' : '') + '" onclick="selectQuestion(\'' + escapeAttr(q.id) + '\')">' +
+            '<div class="q-card-question">' + escapeHtml(q.question) + '</div>' +
+            '<div class="q-card-answer">' + escapeHtml(q.shortAnswer) + '</div>' +
           '</div>'
         );
-      } bodyContainer.innerHTML = parasHtml.join('');
-    } function toggleSelfTests() { var drawer = document.getElementById('selftestDrawer');
-      var isVisible = (drawer.className.indexOf('visible') !== -1);
-      if (isVisible) { drawer.className = 'selftest-drawer';
+      }
+      document.getElementById('questionsGrid').innerHTML = gridHtml.join('');
+
+      var drawer = document.getElementById('qAnswerDrawer');
+      if (!activeQ) {
+        drawer.className = 'q-answer-drawer';
         return;
-      } var report = window.STNEngine.runSelfTests();
-      document.getElementById('selftestSummaryTitle').textContent =
-        'Автопроверка логики и граничных случаев ТЗ: пройдено ' + report.passedCount + ' из ' + report.total + ' тестов';
-      var itemsHtml = [];
-      for (var i = 0; i < report.tests.length; i++) { var t = report.tests[i];
-        itemsHtml.push(
-          '<div class="test-item ' + (t.passed ? 'pass' : 'fail') + '">' + '<div style="font-weight:700; margin-bottom:2px;">' + (t.passed ? '✅ ' : '❌ ') + escapeHtml(t.name) + '</div>' + '<div style="color:var(--text-secondary); font-family:var(--font-mono); font-size:11px;">' +
-              'Результат: ' + escapeHtml(t.actual) + '</div>' + '</div>'
+      }
+
+      document.getElementById('qDrawerDetails').textContent = activeQ.details;
+      var citesHtml = [];
+      for (var j = 0; j < (activeQ.citations || []).length; j++) {
+        var c = activeQ.citations[j];
+        var cid = registerCite(c.fileName, c.paragraphId, activeQ.question + ' — ' + c.label, c.quote, '');
+        citesHtml.push(
+          '<button type="button" class="btn-cite-Light" onclick="openCite(' + cid + ')">📄 ' +
+            escapeHtml(c.label) +
+          '</button>'
         );
-      } document.getElementById('selftestGrid').innerHTML = itemsHtml.join('');
-      drawer.className = 'selftest-drawer visible';
-    } function escapeHtml(str) { return String(str || '')
+      }
+      document.getElementById('qDrawerCites').innerHTML = citesHtml.join('');
+      drawer.className = 'q-answer-drawer visible';
+    }
+
+    function selectQuestion(qId) {
+      if (activeQuestionId === qId) {
+        clearQuestionFilter();
+        return;
+      }
+      activeQuestionId = qId;
+      recomputeAndRender();
+      for (var i = 0; i < currentQuestions.length; i++) {
+        var q = currentQuestions[i];
+        if (q.id === qId && q.citations && q.citations[0]) {
+          var fc = q.citations[0];
+          focusCitation(fc.fileName, fc.paragraphId, q.question + ' — ' + fc.label, fc.quote, q.shortAnswer);
+          break;
+        }
+      }
+    }
+
+    function clearQuestionFilter() {
+      activeQuestionId = null;
+      recomputeAndRender();
+    }
+
+    function formatClauseRef(fileName, clause) {
+      return '📄 ' + fileName + (clause ? ', п. ' + clause : '');
+    }
+
+    function renderTable() {
+      var tbody = document.getElementById('contractsTableBody');
+      var contracts = (resolvedState && resolvedState.contracts) || [];
+      var activeFilterIds = null;
+
+      if (activeQuestionId) {
+        for (var qIdx = 0; qIdx < currentQuestions.length; qIdx++) {
+          if (currentQuestions[qIdx].id === activeQuestionId) {
+            activeFilterIds = currentQuestions[qIdx].filterContracts || [];
+            break;
+          }
+        }
+      }
+
+      var rowsHtml = [];
+      for (var i = 0; i < contracts.length; i++) {
+        var c = contracts[i];
+        var rowClass = '';
+        if (activeFilterIds) {
+          rowClass = activeFilterIds.indexOf(c.contractId) !== -1 ? 'row-highlighted' : 'row-dimmed';
+        }
+
+        // 1. Договор и Поставщик
+        var colContract =
+          '<div class="contract-id">' + escapeHtml(c.contractId) + '</div>' +
+          '<div class="supplier-name">' + escapeHtml(c.supplier || 'Поставщик не указан') + '</div>' +
+          '<div class="contract-meta">' +
+            'Покупатель: ' + escapeHtml(c.buyer || '—') +
+            (c.subject ? '<br>Предмет: ' + escapeHtml(c.subject) : '') +
+          '</div>';
+
+        // 2. Документы пакета
+        var docsHtml = [];
+        for (var dIdx = 0; dIdx < (c.relatedDocs || []).length; dIdx++) {
+          var rd = c.relatedDocs[dIdx];
+          var dCiteId = registerCite(rd.fileName, rd.paragraphId || 'p_1', c.contractId + ': ' + rd.docTitle, rd.quote || '', '');
+          var signBadge = rd.isSigned
+            ? '<span class="badge-sign badge-signed">Подписан</span>'
+            : '<span class="badge-sign badge-unsigned">Не подписан</span>';
+          docsHtml.push(
+            '<button type="button" class="doc-pill" onclick="openCite(' + dCiteId + ')">' +
+              '<div class="doc-pill-top">' +
+                '<span class="doc-pill-title">' + escapeHtml(rd.docTitle) + '</span>' +
+                signBadge +
+              '</div>' +
+              '<div class="doc-pill-file">' + escapeHtml(rd.fileName) + '</div>' +
+            '</button>'
+          );
+        }
+        var colDocs = '<div class="doc-pill-list">' + docsHtml.join('') + '</div>';
+
+        // 3. Сумма договора
+        var amt = c.activeAmount || { status: 'missing', displayValue: 'нет данных' };
+        var amtCiteId = registerCite(
+          amt.fileName || (c.relatedDocs[0] && c.relatedDocs[0].fileName) || '01_contract.txt',
+          amt.paragraphId || 'p_1',
+          c.contractId + ' — Сумма договора: ' + amt.displayValue,
+          amt.exactQuote || amt.quote || '',
+          amt.displayValue
+        );
+        var colAmount = '';
+        if (amt.status === 'missing') {
+          colAmount += '<div><span class="badge-missing" onclick="openCite(' + amtCiteId + ')">нет данных</span></div>';
+        } else {
+          colAmount += '<div><span class="val-primary" onclick="openCite(' + amtCiteId + ')">' + escapeHtml(amt.displayValue) + '</span></div>';
+        }
+        if (amt.changedBy) {
+          colAmount += '<div class="change-note">Изменено: ' + escapeHtml(amt.changedBy) + (amt.effectiveDate ? ' (с ' + escapeHtml(amt.effectiveDate) + ')' : '') + '</div>';
+          if (c.amountHistory && c.amountHistory.length > 0) {
+            var oldAmt = c.amountHistory[0];
+            var oldAmtCiteId = registerCite(oldAmt.fileName, oldAmt.paragraphId, c.contractId + ' — Прежняя сумма: ' + oldAmt.displayValue, oldAmt.exactQuote || oldAmt.quote || '', oldAmt.displayValue);
+            colAmount += '<div><span class="old-val-link" onclick="openCite(' + oldAmtCiteId + ')">Было: ' + escapeHtml(oldAmt.displayValue) + '</span></div>';
+          }
+        }
+        if (amt.fileName) {
+          colAmount += '<div><button type="button" class="source-btn" onclick="openCite(' + amtCiteId + ')">' + escapeHtml(formatClauseRef(amt.fileName, amt.clause)) + '</button></div>';
+        }
+
+        // 4. Срок поставки
+        var deliv = c.activeDeliveryDate || { status: 'missing', value: 'нет данных' };
+        var delivVal = deliv.value || deliv.displayValue || 'нет данных';
+        var delivCiteId = registerCite(
+          deliv.fileName || (c.relatedDocs[0] && c.relatedDocs[0].fileName) || '01_contract.txt',
+          deliv.paragraphId || 'p_1',
+          c.contractId + ' — Срок поставки: ' + delivVal,
+          deliv.exactQuote || deliv.quote || '',
+          delivVal
+        );
+        var colDeliv = '';
+        if (deliv.status === 'missing') {
+          colDeliv += '<div><span class="badge-missing" onclick="openCite(' + delivCiteId + ')">нет данных</span></div>';
+        } else {
+          colDeliv += '<div><span class="val-primary" onclick="openCite(' + delivCiteId + ')">' + escapeHtml(delivVal) + '</span></div>';
+        }
+        if (deliv.changedBy) {
+          colDeliv += '<div class="change-note">Изменено: ' + escapeHtml(deliv.changedBy) + '</div>';
+          if (c.deliveryDateHistory && c.deliveryDateHistory.length > 0) {
+            var oldDel = c.deliveryDateHistory[0];
+            var oldDelVal = oldDel.value || oldDel.displayValue;
+            var oldDelCiteId = registerCite(oldDel.fileName, oldDel.paragraphId, c.contractId + ' — Прежний срок поставки: ' + oldDelVal, oldDel.exactQuote || oldDel.quote || '', oldDelVal);
+            colDeliv += '<div><span class="old-val-link" onclick="openCite(' + oldDelCiteId + ')">Было: ' + escapeHtml(oldDelVal) + '</span></div>';
+          }
+        }
+        if (deliv.fileName) {
+          colDeliv += '<div><button type="button" class="source-btn" onclick="openCite(' + delivCiteId + ')">' + escapeHtml(formatClauseRef(deliv.fileName, deliv.clause)) + '</button></div>';
+        }
+
+        // 5. Неустойка (п. 4.1)
+        var pen = c.activePenalty || { status: 'missing', displayValue: 'нет данных' };
+        var penCiteId = registerCite(
+          pen.fileName || (c.relatedDocs[0] && c.relatedDocs[0].fileName) || '01_contract.txt',
+          pen.paragraphId || 'p_1',
+          c.contractId + ' — Неустойка (п. 4.1): ' + pen.displayValue,
+          pen.exactQuote || pen.quote || '',
+          pen.displayValue
+        );
+        var colPenalty = '';
+        if (pen.status === 'missing') {
+          colPenalty += '<div><span class="badge-missing" onclick="openCite(' + penCiteId + ')">нет данных</span></div>';
+        } else {
+          colPenalty += '<div><span class="val-primary" onclick="openCite(' + penCiteId + ')">' + escapeHtml(pen.displayValue) + '</span></div>';
+          if (pen.financialNote) {
+            colPenalty += '<div class="penalty-rub">' + escapeHtml(pen.financialNote) + '</div>';
+          }
+        }
+        if (pen.fileName) {
+          colPenalty += '<div><button type="button" class="source-btn" onclick="openCite(' + penCiteId + ')">' + escapeHtml(formatClauseRef(pen.fileName, pen.clause)) + '</button></div>';
+        }
+
+        // 6. Сведения для проверки и отсеянные ловушки
+        var colVerify = '';
+        var warnings = c.warnings || [];
+        for (var wIdx = 0; wIdx < warnings.length; wIdx++) {
+          var w = warnings[wIdx];
+          var wCiteId = registerCite(w.fileName, w.paragraphId || 'p_1', c.contractId + ' — ' + w.title, w.exactQuote || w.quote || '', '');
+          colVerify +=
+            '<div class="warn-card' + (w.severity === 'high' ? ' high' : '') + '">' +
+              '<div class="warn-title">' + escapeHtml(w.title) + '</div>' +
+              '<button type="button" class="source-btn" onclick="openCite(' + wCiteId + ')">📄 Проверить: ' + escapeHtml(w.fileName) + '</button>' +
+            '</div>';
+        }
+
+        var traps = c.ignoredTraps || [];
+        if (traps.length > 0) {
+          var trapItemsHtml = [];
+          for (var tIdx = 0; tIdx < traps.length; tIdx++) {
+            var tr = traps[tIdx];
+            var trCiteId = registerCite(tr.fileName, tr.paragraphId || 'p_1', c.contractId + ' — Отсеянная ловушка: ' + tr.label, tr.exactQuote || tr.quote || '', tr.value || '');
+            trapItemsHtml.push(
+              '<div class="trap-item">' +
+                '<span>' + escapeHtml(tr.label) + (tr.value ? ' (' + escapeHtml(tr.value) + ')' : '') + '</span>' +
+                '<button type="button" class="source-btn" onclick="openCite(' + trCiteId + ')">' + escapeHtml(formatClauseRef(tr.fileName, tr.clause)) + '</button>' +
+              '</div>'
+            );
+          }
+          colVerify +=
+            '<details class="traps-details">' +
+              '<summary>Отсеяно чисел-ловушек: ' + traps.length + ' (показать)</summary>' +
+              '<div class="traps-list">' + trapItemsHtml.join('') + '</div>' +
+            '</details>';
+        }
+
+        rowsHtml.push(
+          '<tr class="' + rowClass + '">' +
+            '<td>' + colContract + '</td>' +
+            '<td>' + colDocs + '</td>' +
+            '<td>' + colAmount + '</td>' +
+            '<td>' + colDeliv + '</td>' +
+            '<td class="col-penalty">' + colPenalty + '</td>' +
+            '<td>' + colVerify + '</td>' +
+          '</tr>'
+        );
+      }
+
+      tbody.innerHTML = rowsHtml.join('');
+    }
+
+    function focusCitation(fileName, paragraphId, labelText, exactQuote, highlightToken) {
+      activeViewerState.fileName = fileName;
+      activeViewerState.paragraphId = paragraphId;
+      activeViewerState.labelText = labelText;
+      activeViewerState.exactQuote = exactQuote;
+      activeViewerState.highlightToken = highlightToken;
+      renderViewer();
+    }
+
+    function highlightQuoteInText(paraText, exactQuote, highlightToken) {
+      var safeText = escapeHtml(paraText);
+      var candidates = [];
+      if (highlightToken && String(highlightToken).length >= 3 && highlightToken !== 'нет данных') {
+        candidates.push(String(highlightToken).replace(/\s*\(с НДС\)/i, '').trim());
+      }
+      if (exactQuote && String(exactQuote).length >= 4) {
+        candidates.push(String(exactQuote).trim());
+      }
+      for (var i = 0; i < candidates.length; i++) {
+        var needle = escapeHtml(candidates[i]);
+        if (needle && safeText.indexOf(needle) !== -1) {
+          return safeText.replace(needle, '<mark>' + needle + '</mark>');
+        }
+      }
+      return safeText;
+    }
+
+    function renderViewer() {
+      var parsedDocs = (resolvedState && resolvedState.parsedDocs) || [];
+      if (parsedDocs.length === 0) return;
+
+      var targetDoc = parsedDocs[0];
+      for (var i = 0; i < parsedDocs.length; i++) {
+        if (parsedDocs[i].fileName === activeViewerState.fileName) {
+          targetDoc = parsedDocs[i];
+          break;
+        }
+      }
+      activeViewerState.fileName = targetDoc.fileName;
+
+      // Вкладки файлов
+      var tabsHtml = [];
+      for (var j = 0; j < parsedDocs.length; j++) {
+        var d = parsedDocs[j];
+        var isCurrent = (d.fileName === targetDoc.fileName);
+        tabsHtml.push(
+          '<button type="button" class="file-tab' + (isCurrent ? ' active' : '') + '" onclick="focusCitation(\'' + escapeAttr(d.fileName) + '\', \'p_1\', \'Просмотр файла ' + escapeAttr(d.fileName) + '\', \'\', \'\')">' +
+            escapeHtml(d.fileName) +
+          '</button>'
+        );
+      }
+      document.getElementById('viewerTabs').innerHTML = tabsHtml.join('');
+
+      // Бейдж статуса документа
+      var badge = document.getElementById('viewerDocSignBadge');
+      if (targetDoc.isSigned) {
+        badge.className = 'badge-sign badge-signed';
+        badge.textContent = 'Подписан обеими сторонами';
+      } else {
+        badge.className = 'badge-sign badge-unsigned';
+        badge.textContent = 'Не подписан / Проект или письмо';
+      }
+
+      // Поиск активного абзаца и рендер текста
+      var activeClauseLabel = 'Шапка';
+      var activeQuoteText = activeViewerState.exactQuote || '';
+      var parasHtml = [];
+      var paragraphs = targetDoc.paragraphs || [];
+
+      for (var k = 0; k < paragraphs.length; k++) {
+        var p = paragraphs[k];
+        var isParaActive = (p.id === activeViewerState.paragraphId);
+        var clauseText = p.clause ? ('п. ' + p.clause) : 'Шапка';
+        if (isParaActive) {
+          activeClauseLabel = clauseText;
+          if (!activeQuoteText) activeQuoteText = p.text;
+        }
+        var formattedText = isParaActive
+          ? highlightQuoteInText(p.text, activeViewerState.exactQuote, activeViewerState.highlightToken)
+          : escapeHtml(p.text);
+
+        parasHtml.push(
+          '<div id="viewer_para_' + escapeAttr(p.id) + '" class="para-row' + (isParaActive ? ' active' : '') + '">' +
+            '<div class="para-clause">' + escapeHtml(clauseText) + '</div>' +
+            '<div class="para-text">' + formattedText + '</div>' +
+          '</div>'
+        );
+      }
+      document.getElementById('viewerBody').innerHTML = parasHtml.join('');
+
+      // Желтая плашка проверяемой цитаты
+      var bannerHtml =
+        '<div><strong>Проверка:</strong> ' + escapeHtml(activeViewerState.labelText || targetDoc.fileName) +
+        ' &nbsp;|&nbsp; <strong>Источник:</strong> ' + escapeHtml(targetDoc.fileName) + ' (' + escapeHtml(activeClauseLabel) + ')</div>';
+      if (activeQuoteText) {
+        bannerHtml += '<div class="citation-banner-quote">«' + escapeHtml(activeQuoteText) + '»</div>';
+      }
+      document.getElementById('activeCitationBanner').innerHTML = bannerHtml;
+
+      // Плавная прокрутка к активному абзацу в центр
+      if (activeViewerState.paragraphId) {
+        var activeEl = document.getElementById('viewer_para_' + activeViewerState.paragraphId);
+        if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+
+    function openSelfTestsModal() {
+      var report = window.STNEngine.runSelfTests();
+      document.getElementById('selftestSummaryTitle').textContent =
+        'Пройдено ' + report.passedCount + ' из ' + report.total + ' тестов';
+
+      var itemsHtml = [];
+      for (var i = 0; i < report.tests.length; i++) {
+        var t = report.tests[i];
+        itemsHtml.push(
+          '<div class="test-item' + (t.passed ? '' : ' fail') + '">' +
+            '<div style="font-weight:700; margin-bottom:2px;">' +
+              (t.passed ? '✅ ' : '❌ ') + escapeHtml(t.name) +
+            '</div>' +
+            '<div style="color:var(--text-secondary); font-family:var(--font-mono); font-size:11px;">' +
+              escapeHtml(t.actual) +
+            '</div>' +
+          '</div>'
+        );
+      }
+      document.getElementById('selftestGrid').innerHTML = itemsHtml.join('');
+      document.getElementById('selftestModalBackdrop').className = 'modal-backdrop visible';
+    }
+
+    function closeSelfTestsModal() {
+      document.getElementById('selftestModalBackdrop').className = 'modal-backdrop';
+    }
+
+    function onModalBackdropClick(event) {
+      if (event.target && event.target.id === 'selftestModalBackdrop') {
+        closeSelfTestsModal();
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
-    } function escapeAttr(str) { return String(str || '')
+    }
+
+    function escapeAttr(str) {
+      return String(str || '')
         .replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'")
         .replace(/"/g, '&quot;')
         .replace(/\r?\n/g, ' ');
-    } </script>
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+      if (!window.STNEngine) {
+        alert('Не найден файл engine.js. Убедитесь, что engine.js находится в одной папке с index.html.');
+        return;
+      }
+      setupDragAndDrop();
+      resetToDemoFiles();
+    });
+  </script>
 </body>
 </html>
