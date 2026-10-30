@@ -261,81 +261,31 @@ body.drag-over::after {
   border: 1px solid var(--border-color);
   min-width: 0;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+  padding: 12px 14px;
+  overflow-x: auto;
 }
 
-.table-scroll-hint {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 12px;
-  background: #e2e8f0;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #334155;
-}
-
-/* Постоянно видимая верхняя и нижняя полоса горизонтального скролла (даже на macOS) */
-.table-top-scroll {
-  width: 100%;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  height: 14px;
-  background: #e2e8f0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.table-top-scroll-inner {
-  height: 1px;
-}
-
-.table-scroll-wrap {
-  width: 100%;
-  overflow-x: scroll;
-  padding: 0;
-}
-
-.table-top-scroll::-webkit-scrollbar,
-.table-scroll-wrap::-webkit-scrollbar,
+.table-panel::-webkit-scrollbar,
 .viewer-body::-webkit-scrollbar {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  background-color: #e2e8f0;
+  width: 10px;
+  height: 10px;
 }
 
-.table-top-scroll::-webkit-scrollbar-track,
-.table-scroll-wrap::-webkit-scrollbar-track,
+.table-panel::-webkit-scrollbar-track,
 .viewer-body::-webkit-scrollbar-track {
-  background-color: #e2e8f0;
-  border: 1px solid #cbd5e1;
+  background-color: #f1f5f9;
 }
 
-.table-top-scroll::-webkit-scrollbar-thumb,
-.table-scroll-wrap::-webkit-scrollbar-thumb,
+.table-panel::-webkit-scrollbar-thumb,
 .viewer-body::-webkit-scrollbar-thumb {
-  background-color: #64748b;
-  border: 2px solid #e2e8f0;
-}
-
-.table-top-scroll::-webkit-scrollbar-thumb:hover,
-.table-scroll-wrap::-webkit-scrollbar-thumb:hover,
-.viewer-body::-webkit-scrollbar-thumb:hover {
-  background-color: #334155;
+  background-color: #94a3b8;
 }
 
 .contracts-table {
   width: 100%;
-  min-width: 820px;
   table-layout: fixed;
   border-collapse: collapse;
-}
-
-.contracts-table.show-penalty {
-  min-width: 980px;
 }
 
 .contracts-table th {

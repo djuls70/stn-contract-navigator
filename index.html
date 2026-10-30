@@ -45,28 +45,19 @@
   <!-- Зона 3: Основная рабочая область (Таблица слева + Первоисточник справа) -->
   <main class="workspace-grid">
     <div class="table-panel">
-      <div class="table-scroll-hint">
-        <span>Реестр договоров поставки</span>
-        <span>⇄ Горизонтальная прокрутка таблицы (сверху и снизу)</span>
-      </div>
-      <div id="tableTopScroll" class="table-top-scroll" onscroll="syncTableScroll('top')">
-        <div id="tableTopScrollInner" class="table-top-scroll-inner"></div>
-      </div>
-      <div id="tableScrollWrap" class="table-scroll-wrap" onscroll="syncTableScroll('bottom')">
-        <table id="contractsTable" class="contracts-table">
-          <thead>
-            <tr>
-              <th class="col-c1">Договор и Поставщик</th>
-              <th class="col-c2">Документы пакета</th>
-              <th class="col-c3">Сумма договора</th>
-              <th class="col-c4">Срок поставки</th>
-              <th class="col-penalty">Неустойка (п. 4.1)</th>
-              <th class="col-c6">Сведения для проверки</th>
-            </tr>
-          </thead>
-          <tbody id="contractsTableBody"></tbody>
-        </table>
-      </div>
+      <table id="contractsTable" class="contracts-table">
+        <thead>
+          <tr>
+            <th class="col-c1">Договор и Поставщик</th>
+            <th class="col-c2">Документы пакета</th>
+            <th class="col-c3">Сумма договора</th>
+            <th class="col-c4">Срок поставки</th>
+            <th class="col-penalty">Неустойка (п. 4.1)</th>
+            <th class="col-c6">Сведения для проверки</th>
+          </tr>
+        </thead>
+        <tbody id="contractsTableBody"></tbody>
+      </table>
     </div>
 
     <aside class="viewer-panel">
@@ -223,17 +214,6 @@
       btn.className = 'btn btn-toggle' + (showPenaltyCol ? ' active' : '');
       btn.textContent = showPenaltyCol ? '✓ Неустойка (п. 4.1)' : '+ Неустойка (п. 4.1)';
       tbl.className = 'contracts-table' + (showPenaltyCol ? ' show-penalty' : '');
-      updateTopScrollWidth();
-    }
-
-    function syncTableScroll(src) {
-      var topEl = document.getElementById('tableTopScroll'), botEl = document.getElementById('tableScrollWrap');
-      if (src === 'top') botEl.scrollLeft = topEl.scrollLeft; else topEl.scrollLeft = botEl.scrollLeft;
-    }
-
-    function updateTopScrollWidth() {
-      var tbl = document.getElementById('contractsTable'), inner = document.getElementById('tableTopScrollInner');
-      if (tbl && inner) inner.style.width = (tbl.scrollWidth || (showPenaltyCol ? 980 : 820)) + 'px';
     }
 
     function recomputeAndRender() {
@@ -474,7 +454,6 @@
         rowsHtml.push('<tr class="' + rowClass + '"><td class="col-c1">' + colContract + '</td><td class="col-c2">' + colDocs + '</td><td class="col-c3">' + colAmount + '</td><td class="col-c4">' + colDeliv + '</td><td class="col-penalty">' + colPenalty + '</td><td class="col-c6">' + colVerify + '</td></tr>');
       }
       tbody.innerHTML = rowsHtml.join('');
-      updateTopScrollWidth();
     }
 
     function focusCitation(fileName, paragraphId, labelText, exactQuote, highlightToken) {
